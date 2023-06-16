@@ -8,7 +8,7 @@ During the training process, model checkpoints are saved at regular intervals.
 """
 
 import torch
-from text_data_processor import TextDataProcessor, TextDataset
+from text_data_processor import URLTextDataProcessor, FileTextDataProcessor, DirectoryTextDataProcessor, TextDataset
 from model_training import train
 from model import LanguageModel
 import argparse
@@ -32,13 +32,18 @@ parser.add_argument('--proj_dropout', type=float, default=0.0, help='Dropout rat
 parser.add_argument('--ffwd_dropout', type=float, default=0.0, help='Dropout rate for feedforward network in the transformer model')
 
 # Add arguments for text preprocessing
-parser.add_argument('--file_path', type=str, default='./default_input.txt', help='File path for input text data')
-parser.add_argument('--url', type=str, default="https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt", help='URL for input text data if file path is not available')
-
+parser.add_argument('--source', type=str, default = 'urls.txt',
+                    help="Source of the data. Depending on the processor type, this can be a URL, a file path, or a directory path.")
+parser.add_argument('--processor_type', type=str, default='url', 
+                    help="Type of text data processor to use. Valid values are: url, file, directory. Default is 'url'.")
+parser.add_argument('--is_url_file', action='store_true', default = True,
+                    help="If set, the source is assumed to be a file containing URLs. Only applicable when processor_type is 'url'.")
+    
 # Add arguments for training and saving results
 parser.add_argument('--checkpoint_dir', type=str, default="./model_checkpoint", help='Directory to save model checkpoints')
 parser.add_argument('--checkpoint_steps', type=int, default=10000, help='Save a checkpoint every these many steps')
 parser.add_argument('--save_results_path', type=str, default="./training_results.pth", help='Path to save the training results')
+
 
 # Parse arguments
 args = parser.parse_args()
@@ -60,8 +65,9 @@ proj_dropout = args.proj_dropout
 ffwd_dropout = args.ffwd_dropout
 
 # text processing
-file_path = args.file_path
-url = args.url
+source = args.source
+processor_type = args.processor_type
+is_url_file = args.is_url_file
 
 # training and save results
 checkpoint_dir = args.checkpoint_dir
@@ -72,7 +78,16 @@ save_results_path = args.save_results_path
 torch.set_default_device(device)
 
 
-processor = TextDataProcessor(file_path = file_path, url = url)
+if processor_type == 'url':
+  processor = URLTextDataProcessor(source, is_url_file=is_url_file)
+elif processor_type == 'file':
+  processor = FileTextDataProcessor(source)
+elif processor_type == 'directory':
+  processor = DirectoryTextDataProcessor(source)
+else:
+  raise ValueError('Invalid processor type! Valid types are: url, file, directory')
+
+
 processor.preprocess_text()
 
 train_data, val_data = processor.train_val_split(0.1)
