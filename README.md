@@ -18,10 +18,6 @@ This repository contains Python scripts for training a transformer-based languag
 
 The `trainer.py` script is used for training the language model. The script leverages a preprocessed text dataset and divides it into training and validation sets. The model's architecture and training hyperparameters are customizable via command-line arguments. During the training process, model checkpoints are saved at regular intervals. 
 
-An important aspect of the training process is the preprocessing of the input text data. We use the TextDataProcessor class (and its subclasses URLTextDataProcessor, FileTextDataProcessor, DirectoryTextDataProcessor) from the text_data_processor.py module to handle this. These classes load text data from various sources, preprocess it by encoding characters as integers, and split it into training and validation sets.
-
-For example, if you have a text file stored locally, you could use the FileTextDataProcessor to load and preprocess the text data for training. If you have multiple text files in a directory, you could use the DirectoryTextDataProcessor to process all text files at once. Alternatively, if your text data is located online, the URLTextDataProcessor can be used to download and preprocess the data.
-
 After preprocessing, the text data is converted to a PyTorch TextDataset which generates pairs of context and target sequences for training the language model. The context is a sequence of n characters, and the target is the next character to be predicted.
 
 Here is an example command to run the script:
@@ -33,6 +29,13 @@ python trainer.py --batch_size 32 --num_epochs 2 --file_path "./new_input.txt" -
 The above command will start training the model with a batch size of 32, for 2 epochs. It uses the text data from the file `new_input.txt` for training. Model checkpoints will be saved in the directory `new_checkpoint_dir`. The training results (final model state and configurations) will be saved at `new_training_results.pth`.
 
 You can view all available options by running `python trainer.py --help`.
+
+## Text Data Processors
+An important aspect of the training process is the preprocessing of the input text data. We use the TextDataProcessor class (and its subclasses URLTextDataProcessor, FileTextDataProcessor, DirectoryTextDataProcessor) from the text_data_processor.py module to handle this. These classes load text data from various sources, preprocess it by encoding characters as integers, and split it into training and validation sets.
+
+For example, if you have a text file stored locally, you could use the FileTextDataProcessor to load and preprocess the text data for training. If you have multiple text files in a directory, you could use the DirectoryTextDataProcessor to process all text files at once. Alternatively, if your text data is located online, the URLTextDataProcessor can be used to download and preprocess the data.
+
+
 
 ## Generating Text
 
