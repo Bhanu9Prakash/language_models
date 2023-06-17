@@ -38,7 +38,10 @@ parser.add_argument('--processor_type', type=str, default='url',
                     help="Type of text data processor to use. Valid values are: url, file, directory. Default is 'url'.")
 parser.add_argument('--is_url_file', action='store_true', default = True,
                     help="If set, the source is assumed to be a file containing URLs. Only applicable when processor_type is 'url'.")
-    
+parser.add_argument('-e', '--encoding_type', choices=['char', 'bpe'], default='char', 
+                        help='The type of encoding to use. Options are "char" for character-level encoding and "bpe" for Byte Pair Encoding. Default is "char".')
+
+
 # Add arguments for training and saving results
 parser.add_argument('--checkpoint_dir', type=str, default="./model_checkpoint", help='Directory to save model checkpoints')
 parser.add_argument('--checkpoint_steps', type=int, default=10000, help='Save a checkpoint every these many steps')
@@ -68,6 +71,7 @@ ffwd_dropout = args.ffwd_dropout
 source = args.source
 processor_type = args.processor_type
 is_url_file = args.is_url_file
+encoding_type = args.encoding_type
 
 # training and save results
 checkpoint_dir = args.checkpoint_dir
@@ -79,11 +83,11 @@ torch.set_default_device(device)
 
 
 if processor_type == 'url':
-  processor = URLTextDataProcessor(source, is_url_file=is_url_file)
+  processor = URLTextDataProcessor(source, encoding_type = encoding_type, is_url_file=is_url_file)
 elif processor_type == 'file':
-  processor = FileTextDataProcessor(source)
+  processor = FileTextDataProcessor(source, encoding_type = encoding_type)
 elif processor_type == 'directory':
-  processor = DirectoryTextDataProcessor(source)
+  processor = DirectoryTextDataProcessor(source, encoding_type = encoding_type)
 else:
   raise ValueError('Invalid processor type! Valid types are: url, file, directory')
 

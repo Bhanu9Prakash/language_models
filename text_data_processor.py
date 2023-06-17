@@ -4,6 +4,7 @@ text_data_processor.py
 
 A Python module that contains classes for processing and managing text data for deep learning models. 
 It provides functionality to load text data from various sources such as single/multiple URLs, local files, or entire directories. 
+It supports both character-level and Byte Pair Encoding (BPE) encoding options, thanks to OpenAI's tiktoken library.
 
 It includes the following main classes:
 1. TextDataProcessor: The base class that handles the common operations such as text preprocessing, 
@@ -29,47 +30,69 @@ from tqdm import tqdm
 class TextDataProcessor:
   """
   A base class for downloading, reading, preprocessing, and splitting text data.
-
+  
   Args:
     source (Union[str, List[str]]): Source of the data, can be a string or a list of strings depending on the specific subclass used.
+    encoding_type (str): The type of encoding to use. It can be 'char' or 'bpe'.
 
   Attributes:
     source (Union[str, List[str]]): Source of the data.
+    encoding_type (str): The type of encoding to use.
     chars (List[char]): Unique characters in the dataset.
     stoi (Dict): Dictionary to convert a character to its corresponding integer representation.
     itos (Dict): Dictionary to convert an integer back to its corresponding character.
+    tokenizer: The tokenizer object, only available when encoding_type is 'bpe'.
     text (str): The raw text data loaded.
     vocab_size (int): The size of the vocabulary (i.e., number of unique characters in the dataset).
   """
 
-  def __init__(self, source: Union[str, List[str]]):
+  def __init__(self, source: Union[str, List[str]], encoding_type: str = "char"):
     self.source = source
+    self.encoding_type = encoding_type
     self.chars = []
     self.stoi = {}
     self.itos = {}
     self.text = self.load_data()
     self.vocab_size = 0
+    if self.encoding_type == "bpe":
+        self.tokenizer = self.get_bpe_tokenizer()
     self.preprocess_text()
 
   def load_data(self):
     """
-    This is a placeholder function. It should be implemented in subclasses.
+    Loads the data from the source. Needs to be implemented in subclasses.
+
+    Returns:
+      str: The loaded raw text data.
     """
     raise NotImplementedError
 
+  def get_bpe_tokenizer(self):
+    """
+    Initializes the BPE tokenizer.
+
+    Returns:
+      tiktoken.Tokenizer: The initialized BPE tokenizer.
+    """
+    enc = tiktoken.get_encoding("cl100k_base")
+    return enc
+
   def preprocess_text(self) -> None:
     """
-    Processes the raw text data. Constructs mappings from characters to integers and vice versa. 
-    Also computes the size of the vocabulary.
+    Preprocesses the raw text data. Constructs mappings from characters to integers and vice versa for 'char' encoding. 
+    For 'bpe' encoding, this function does nothing.
     """
-    self.chars = sorted(set(self.text))
-    self.stoi = {ch: i for i, ch in enumerate(self.chars)}
-    self.itos = {i: ch for i, ch in enumerate(self.chars)}
-    self.vocab_size = len(self.chars)
+    if self.encoding_type == "char":
+        self.chars = sorted(set(self.text))
+        self.stoi = {ch: i for i, ch in enumerate(self.chars)}
+        self.itos = {i: ch for i, ch in enumerate(self.chars)}
+        self.vocab_size = len(self.chars)
+    elif self.encoding_type == "bpe":
+        pass
 
   def encode(self, s:str) -> List[int]:
     """
-    Encodes a string into a list of integers using the character-to-integer mapping.
+    Encodes a string into a list of integers using the specified encoding.
 
     Args:
       s (str): The string to encode.
@@ -77,11 +100,14 @@ class TextDataProcessor:
     Returns:
       List[int]: The encoded string as a list of integers.
     """
-    return [self.stoi[ch] for ch in s]
+    if self.encoding_type == "char":
+        return [self.stoi[ch] for ch in s]
+    elif self.encoding_type == "bpe":
+        return self.tokenizer.encode(s)
 
   def decode(self, l:List[int]) -> str:
     """
-    Decodes a list of integers into a string using the integer-to-character mapping.
+    Decodes a list of integers into a string using the specified encoding.
 
     Args:
       l (List[int]): The list of integers to decode.
@@ -89,7 +115,10 @@ class TextDataProcessor:
     Returns:
       str: The decoded list of integers as a string.
     """
-    return ''.join(self.itos[i] for i in l)
+    if self.encoding_type == "char":
+        return ''.join(self.itos[i] for i in l)
+    elif self.encoding_type == "bpe":
+        return self.tokenizer.decode(l)
 
   def train_val_split(self, split_ratio:float = 0.1) -> Tuple[List[int], List[int]]:
     """
@@ -117,7 +146,7 @@ class URLTextDataProcessor(TextDataProcessor):
                         If set to False, source is assumed to be one or more direct URLs. 
   """
 
-  def __init__(self, source: Union[str, List[str]], is_url_file: bool = False):
+  def __init__(self, source: Union[str, List[str]], encoding_type: str = "char", is_url_file: bool = False):
     self.is_url_file = is_url_file
     super().__init__(source)
 
@@ -159,7 +188,7 @@ class FileTextDataProcessor(TextDataProcessor):
   Args:
     source (Union[str, List[str]]): Source of the data, can be a single file path or a list of file paths.
   """
-  def __init__(self, source: Union[str, List[str]]):
+  def __init__(self, source: Union[str, List[str]], encoding_type: str = "char"):
       if isinstance(source, str):
           source = [source]
       super().__init__(source)
@@ -184,7 +213,7 @@ class DirectoryTextDataProcessor(TextDataProcessor):
   Assumes that the directory contains .txt files.
 
   Args:
-      source (str): Source of the data, should be a directory path.
+    source (str): Source of the data, should be a directory path.
   """
 
   def load_data(self):
@@ -257,3 +286,4 @@ class TextDataset(Dataset):
     x = torch.tensor(self.data[idx : idx + self.context_length], dtype = torch.long)
     y = torch.tensor(self.data[idx + 1 : idx + 1 + self.context_length], dtype = torch.long)
     return x, y
+
