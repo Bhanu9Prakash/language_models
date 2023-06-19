@@ -1,7 +1,7 @@
 """
-model.py
+decoder_language_model.py
 ======================
-This module defines various components used to construct a Transformer-based language model. The module provides classes for the following elements:
+This module defines various components used to construct a Transformer Decoder - based language model. The module provides classes for the following elements:
 
 1. `Head`: Defines a single head of attention in the Transformer mechanism.
 
@@ -11,7 +11,7 @@ This module defines various components used to construct a Transformer-based lan
 
 4. `DecoderBlock`: Defines a single decoder block in the Transformer architecture. Each decoder block consists of a Multi-Head Attention layer followed by a Feed Forward Network.
 
-5. `LanguageModel`: Implements the overall Language model which employs Decoder Blocks to transform input sequences. The Language Model includes token and positional embeddings and also provides functionality for token generation.
+5. `DecoderLanguageModel`: Implements the overall Language model which employs Decoder Blocks to transform input sequences. The Decoder Language Model includes token and positional embeddings and also provides functionality for token generation.
 
 Each of these classes utilizes PyTorch's nn.Module and includes forward methods for the forward pass computation.
 
@@ -25,7 +25,7 @@ FeedForward : torch.nn.Module
     Feed Forward Network inside the Transformer.
 DecoderBlock : torch.nn.Module
     A single Decoder block of the Transformer.
-LanguageModel : torch.nn.Module
+DecoderLanguageModel : torch.nn.Module
     Language model which utilizes the Decoder Blocks.
 """
 #importing necessary modules
@@ -162,7 +162,7 @@ class DecoderBlock(nn.Module):
     x = x + self.ffwd(self.ln2(x))
     return x
 
-class LanguageModel(nn.Module):
+class DecoderLanguageModel(nn.Module):
   """
   This class represents the Language model which utilizes the Decoder Blocks.
 

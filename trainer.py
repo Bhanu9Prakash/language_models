@@ -10,7 +10,7 @@ During the training process, model checkpoints are saved at regular intervals.
 import torch
 from text_data_processor import URLTextDataProcessor, FileTextDataProcessor, DirectoryTextDataProcessor, TextDataset
 from model_training import train
-from model import LanguageModel
+from models.decoder_language_model import DecoderLanguageModel
 import argparse
 from torch.utils.data import DataLoader
 
@@ -104,7 +104,7 @@ val_dataloader = DataLoader(val_dataset, batch_size = 32, shuffle = False )
 
 
 # Create model
-model = LanguageModel(vocab_size = processor.vocab_size,
+model = DecoderLanguageModel(vocab_size = processor.vocab_size,
                       d_model = d_model,
                       n_layer = n_layer,
                       n_heads = n_heads,
